@@ -8,6 +8,7 @@ exports.signup = async (req, res) => {
       username: req.body.username,
       name: req.body.name,
       password: bcrypt.hashSync(req.body.password, 8),
+      admin: req.body.admin ?? false,
     });
     try {
       await user.save();

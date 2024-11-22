@@ -1,6 +1,18 @@
 const jwt = require("jsonwebtoken");
 const config = require("../config/key.js");
 const User = require("../models/user.js");
+const rateLimit = require('express-rate-limit');
+const userRateLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 5,
+  message: 'Trop de requêtes, veuillez réessayer plus tard.',
+});
+
+const adminRateLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  message: 'Trop de requêtes, veuillez réessayer plus tard.',
+});
 
 verifyToken = (req, res, next) => {
   let token = req.headers["x-access-token"];
@@ -25,7 +37,7 @@ isExist = async (req, res, next) => {
     res.status(403).send({ message: "User not found" });
     return;
   }
-  next();
+  (user.admin ? adminRateLimiter : userRateLimiter)(req, res, next);
 };
 
 isAdmin = async (req, res, next) => {
@@ -38,7 +50,8 @@ isAdmin = async (req, res, next) => {
     res.status(403).send({ message: "User not admin" });
     return;
   }
-  next();
+  (user.admin ? adminRateLimiter : userRateLimiter)(req, res, next);
+
 };
 
 const authJwt = {
